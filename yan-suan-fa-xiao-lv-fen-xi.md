@@ -76,7 +76,7 @@ def matrix_Mult(A,B):
             
 ```
 
-### Algorithm 5 二元搜尋法
+### Algorithm 5 二元搜尋法\(迴圈版\)
 
 * 問題：判斷數字x是否位於陣列S中。
 * 輸入：數字x、陣列S。
