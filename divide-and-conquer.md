@@ -96,3 +96,52 @@ T\(n\) = n\(n-1\)//2 --&gt; 因此時間複雜度為θ\(n ^ 2\)。
 
 最好情況下則會發生在pivot可把S切分為2 --&gt; T\(n\) = 2 \* T\(n/2\) + n-1，因此時間複雜度為 θ\(n log n\)。
 
+## Algorithm4 Strassen矩陣相乘
+
+傳統的方陣相乘的時間複雜度為θ\(n ^ 3\)，其中n為列數與行數。假設C為A和B的乘積，Strassen令  
+m1 = \(a11 + a22\) \* \(b11 + b22\)  
+m2 = \(a21 + a22\) \* b11  
+m3 = a11 \* \(b12 - b22\)  
+m4 = a22 \* \(b21 - b11\)  
+m5 = \(a11 + a12\) \* b22  
+m6 = \(a21 - a11\) \* \(b11 + b12\)  
+m7 = \(a12 - a22\) \* \(b21 + b22\)
+
+```text
+C = [[c11,c12],[c21,c22]]
+A = [[a11,a12],[a21,a22]]
+B = [[b11,b12],[b21,b22]]
+```
+
+則C可表示為
+
+```text
+C = [[m1+m4-m5+m7,m3+m5],[m2+m4,m1+m3-m2+m6]]
+```
+
+此方法需要7次乘法與18次的加減法，直接計算則需要8次乘法與4次加減法，其公式概念是將較大的矩陣分成四個較小的子矩陣，而當矩陣已足夠小時，則使用傳統的矩陣乘法，最後再把結果合併起來。
+
+```text
+import numpy as np
+def strassenMatrixMult(n,A,B):
+    if(n<=2):
+        return np.array(np.dot(A,B))
+    else:
+        mid = len(A)//2
+        A11,A12,A21,A22 = np.array([i[:mid] for i in A[:mid]]),np.array([i[mid:] for i in A[:mid]]),np.array([i[:mid] for i in A[mid:]]),np.array([i[mid:] for i in A[mid:]])
+        B11,B12,B21,B22 = np.array([i[:mid] for i in B[:mid]]),np.array([i[mid:] for i in B[:mid]]),np.array([i[:mid] for i in B[mid:]]),np.array([i[mid:] for i in B[mid:]])
+        m1 = strassenMatrixMult(n//2,A11+A22,B11+B22)
+        m2 = strassenMatrixMult(n//2,A21+A22,B11)
+        m3 = strassenMatrixMult(n//2,A11,B12-B22)
+        m4 = strassenMatrixMult(n//2,A22,B21-B11)
+        m5 = strassenMatrixMult(n//2,A11+A12,B22)
+        m6 = strassenMatrixMult(n//2,A21-A11,B11+B12)
+        m7 = strassenMatrixMult(n//2,A12-A22,B21+B22)
+
+        C11 = m1+m4-m5+m7
+        C12 = m3+m5
+        C21 = m2+m4
+        C22 = m1+m3-m2+m6
+        return np.vstack((np.hstack((C11,C12)),np.hstack((C21,C22))))
+```
+
