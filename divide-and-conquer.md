@@ -183,6 +183,8 @@ def largeNumberMulti(A,B):
         return largeNumber(quotient1,quotient2)*(10**(2*m)) + (largeNumber(quotient2,rem1)+largeNumber(quotient1,rem2))*(10**m)+largeNumber(rem1,rem2)
 ```
 
+時間複雜度：O\(n^2\)
+
 可以再進一步簡化，將一些乘法改為線性的加減法，原本的運算有xw、xz、wy與yz，令r = \(x+y\)\(w+z\) = xw+\(xz+yw\)+yz，可得xz+yw = r-xw-yz，因此我們要用的乘法就剩xw, yz和r了。
 
 ```text
@@ -201,4 +203,8 @@ def largeNumberMulti2(A,B):
         q = largeNumberMulti(rem1,rem2)
         return p*(10**(2*m)) + (r-p-q)*(10**m) + q
 ```
+
+時間複雜度：O\(n^1.58\)
+
+
 
