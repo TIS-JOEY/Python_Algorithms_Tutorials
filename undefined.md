@@ -299,3 +299,182 @@ def multiMulti(U):
 
 時間複雜度：O\(n^2\)
 
+## Algorithm8 平衡二叉樹
+
+有讀過資料結構的一定都會學到二叉樹，二叉樹在查找資料上面最好的情況下是可以達到O\(logN\)的效果，但這當然是這個二叉樹是非常平衡的時候，當其不平衡時，那麼就會變成線性的查找速度。那麼要如何避免這點呢？那就是當二叉樹內的資料被改變時，我們就去檢查他是否是平衡的，我們設有左子節點+1而右子節點為-1，如此當底下的節點相加時若總和為0、1或-1則代表為平衡的。
+
+所以我們的問題結構應該為：
+
+* 問題：建構平衡二叉樹，並保持中序排序
+* 輸入：欲加入數值或欲刪除數值
+* 輸出：平衡二叉樹
+
+首先先讓我們來建立樹節點，這是二叉樹的基本單元，每個單元的屬性有儲存的值data，左節點left，右節點right，parent父節點以及用來計算平衡分數的factor：
+
+### 建立樹節點
+
+```text
+class TreeNode:
+    def __init__(self,data,left = None,right = None,parent = None):
+        self.data = data
+        self.left = left
+        self.right = right
+        self.parent = parent
+        self.factor = 0
+    
+    def hasLeftChild(self):
+        return self.left!=None
+    
+    def hasRightChild(self):
+        return self.right!=None
+    
+    def isLeftChild(self):
+        return self.parent.left == self
+    
+    def isRightChild(self):
+        return self.parent.right == self
+    
+    def isLeaf(self):
+        return self.left and self.right
+```
+
+### 建立二叉樹
+
+接著讓我們來建立一個含有增加值方法的二叉樹，相信大家都還記得，二叉搜索樹的規範就是當加入的數值比根節點大就往右子節點走，而比較小就往左子節點走，而我們就依照此規範進行編寫。
+
+```text
+class AVL_Tree:
+    def __init__(self):
+        self.root = None
+    
+    def put(self,data):
+        if(self.root):
+            self._put(data,self.root)
+        else:
+            self.root = TreeNode(data)
+    
+    def _put(self,data,run_node):
+        if(run_node.data > data):
+            #要加入的數值比較小，要往左子樹走
+            if(run_node.hasLeftChild()):
+                run_node = run_node.left
+                self._put(data,run_node)
+            else:
+                #因為無左子節點，所以可以指定其左子節點為要加入的樹節點
+                newNode = TreeNode(data)
+                run_node.left = newNode
+                newNode.parent = run_node
+                #因新增一節點，所以要進行更新factor的動作
+                self.update_factor(run_node.left)
+        else:
+            #要加入的數值比較大，要往右子樹走
+            if(run_node.hasRightChild()):
+                run_node = run_node.right
+                self._put(data,run_node)
+            else:
+                #因為無右子節點，所以可以指定其右子節點為要加入的樹節點
+                newNode = TreeNode(data)
+                run_node.right = newNode
+                newNode.parent = run_node
+                #因新增一節點，所以要進行更新factor的動作
+                self.update_factor(run_node.right)
+```
+
+可以發現上面的程式碼中，再新增一個節點後，會呼叫一個物件方法update\_factor，其目的就是要進行平衡數值的更新。
+
+那麼接下來就來編寫計算平衡數值的物件方法
+
+### 平衡數值計算
+
+```text
+Class AVL_Tree:
+    ...
+    
+    def update_factor(self,check_node):
+            if check_node.factor > 1 or check_node < -1:
+                #因已喪失平衡了，所以必須進行處理
+                self.rebalance(check_node)
+                return
+            else:
+                if(check_node.isLeftChild()):
+                    #是從左子節點傳上來，所以平衡數值+1
+                    check_node.parent.factor+=1
+                elif(check_node.isRightChild()):
+                    #是從右子節點傳上來，所以平衡數值+1
+                    check_node.parent.factor-=1
+                
+                if(check_node.factor!=0):
+                    #因是動態地不斷地更新平衡，因此若此節點的平衡點數已為0，便代表目前是已平衡的狀態，而不用再繼續往上檢查。
+                    self.update_factor(check_node.parent)
+```
+
+由上面的代碼可以看到幾個重點，那就是當節點的平衡數值是大於1或小於-1時，代表已喪失平衡了，所以必須進行處理，這是就要再call另外一個物件方法rebalance來進行平衡的動作。
+
+另外一個重點就是，因為此二叉樹是不斷地動態更新維持平衡，因此我們只要看所傳入的節點是左邊還是右邊，就可以來進行平衡數值的更新，而當更新完後，其數值為0，代表其上的節點平衡數值不會被影響到了。要注意一點就是，雖然平衡數值為1或-1時也是平衡，但他還是會影響到其父節點的平衡數值，因此要進行更新平衡數值的動作。
+
+### 調整節點維持平衡
+
+在編寫rebalance的方法前，我們必須要先來了解該如何進行移動，才能確保維持二叉搜索樹的性質又可以調整至平衡。
+
+而其實移動的方式在AVL\_Tree中有四種，分別是左轉、右轉、先右轉再左轉、先左轉再右轉，而依類型在分為RR\(連續兩個右子節點\)、LL\(連續兩個左子節點\)、RL\(右子節點接著左子節點\)、LR\(左子節點接右子節點\)，接著讓我來分享怎麼轉還有什麼時機點要使用哪個轉。
+
+#### RR類型
+
+首先是以下這個不平衡的二叉樹，藍色節點的平衡點數應為-2，橘色的平衡點數則為-1，在這種狀況下應該進行轉換以平衡。
+
+![RR&#x985E;&#x578B;](.gitbook/assets/should_rotateleft.png)
+
+#### 左轉
+
+遇到上面那種狀況時，就可以以橘色的節點為基準進行左轉。
+
+![](.gitbook/assets/rotateleft.png)
+
+但有時我們會遇到一個情況那就是基準節點已有左節點，那這時該怎麼辦呢？那就是將被左轉的右節點設為基準節點的左節點，因為被左轉的右節點即為後來的基準點，肯定沒東西。 以下圖為例，橘色節點的平衡點數為2，需要重新平衡。
+
+![RR&#x985E;&#x578B;](.gitbook/assets/complex_should_rotate_left.png)
+
+這時我們一樣以藍色節點為基準點進行左轉，這時藍色節點的左子節點應為橘色節點，這時該怎麼辦呢？答案就是將紅色節點接到橘色節點的右子節點，因爲紅色節點的值必大於橘色節點，作為橘色節點的右子節點是沒問題的。另外，因原橘色節點的右子節點為藍色節點，所以一定不會發生節點衝突的現象。
+
+![](.gitbook/assets/complex_rotate_left.png)
+
+#### LL類型
+
+接著讓我們來看看下面這種狀況，綠色節點的平衡數值為2，橘色節點的平衡數值為1，不平衡，所以一樣需要進行調整的動作。
+
+![LL&#x985E;&#x578B;](.gitbook/assets/should_rotate_right%20%282%29.png)
+
+這時僅需以橘色為基準，進行右轉的動作，如下。
+
+![](.gitbook/assets/rotateright%20%281%29.png)
+
+除了上述這種狀況，當然也會有一種情況是基準點是有右子節點的，進而產生衝突，如下：
+
+![](.gitbook/assets/complex_should_rotate_right%20%281%29.png)
+
+這時，只要將淺藍色節點的左子節點來作為橘色節點的左子節點，且因為橘色節點的左節點為淺藍色節點，所以不用害怕產生衝突。
+
+#### RL類型
+
+再來看看下面這張圖，淺藍色的平衡數值為-2，橘色節點的平衡數值為2，所以必須要進行調整，但這時需要先以綠色節點作為基準進行右轉，轉換成RR類型，在進行左轉。
+
+![RL&#x985E;&#x578B;](.gitbook/assets/should_rotateleft_rotateright.png)
+
+#### 先右轉再左轉
+
+當遇到RL類型，以綠色節點作為基準點進行右轉，就可以轉換為RR類型。
+
+![](.gitbook/assets/rl-lei-xing-xian-you-zhuan.png)
+
+當轉換為RR類型後，就可以進行左轉轉換。
+
+![](.gitbook/assets/rl-lei-xing-zuo-zhuan.png)
+
+#### LR類型
+
+![](.gitbook/assets/should-zuo-zhuan-you-zhuan.png)
+
+![](.gitbook/assets/lr-lei-xing-zuo-zhuan.png)
+
+![](.gitbook/assets/lr-lei-xing-you-zhuan.png)
+
