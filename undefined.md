@@ -391,7 +391,7 @@ Class AVL_Tree:
     ...
     
     def update_factor(self,check_node):
-            if check_node.factor > 1 or check_node < -1:
+            if check_node.factor > 1 or check_node.factor < -1:
                 #因已喪失平衡了，所以必須進行處理
                 self.rebalance(check_node)
                 return
@@ -456,7 +456,7 @@ Class AVL_Tree:
 
 #### RL類型
 
-再來看看下面這張圖，淺藍色的平衡數值為-2，橘色節點的平衡數值為2，所以必須要進行調整，但這時需要先以綠色節點作為基準進行右轉，轉換成RR類型，在進行左轉。
+再來看看下面這張圖，淺藍色的平衡數值為-2，橘色節點的平衡數值為2，所以必須要進行調整，但這時需要先以綠色節點作為基準進行右轉，轉換成RR類型，在進行左轉。在這裡若直接以綠色節點為基準點往左轉，紅色節點就會到綠色節點的右子節點，但這樣就不符合inorder的順序。
 
 ![RL&#x985E;&#x578B;](.gitbook/assets/should_rotateleft_rotateright.png)
 
@@ -472,9 +472,157 @@ Class AVL_Tree:
 
 #### LR類型
 
+遇到LR類型時，一樣也不能直接左轉，而必須先右轉轉換成LL類型，再進行左轉完成調整。
+
 ![](.gitbook/assets/should-zuo-zhuan-you-zhuan.png)
 
 ![](.gitbook/assets/lr-lei-xing-zuo-zhuan.png)
 
 ![](.gitbook/assets/lr-lei-xing-you-zhuan.png)
+
+好了，有了以下概念，我們可以知道最基本的動作就是左轉和右轉，因此先讓我們來編寫左轉和右轉以及rebalance物件方法。
+
+```text
+class AVL_Tree:
+    ...
+    def rebalance(self,node):
+        if(node.factor < 0):
+            #R類型
+            if(node.right.factor > 0):
+                #RL類型，須先右轉再左轉
+                self.rotateRight(node.right)
+                self.rotateLeft(node)
+            else:
+                #RR類型，直接左轉
+                self.rotateLeft(node)
+        else:
+            #L類型
+            if(node.left.factor < 0):
+                #LR類型，須先左轉再右轉
+                self.rotateLeft(node.left)
+                self.rotateRight(node)
+            else:
+                #LL類型，直接右轉
+                self.rotateRight(node)
+    
+    def rotateLeft(self,old_node):
+        #以原節點的右子節點來作為基準點
+        new_node = old_node.right
+        #將基準點的左子節點指定給原節點的右子節點，如此可以確保中序且避免節點衝突
+        old_node.right = new_node.left
+        #將基準點的父節點設為原節點的父節點
+        new_node.parent = old_node.parent
+        
+        if new_node.left:
+            #若基準點的左子節點是有節點的，則就要更新他的parent
+            new_node.left.parent = old_node
+        
+        if self.root==old_node:
+            #若原節點為根節點，則將基準點設為根節點
+            self.root = new_node
+        else:
+            if(old_node.isLeftChild()):
+                #若原節點為其父節點的左子節點，則必須將其父節點的左子節點設為基準點
+                old_node.parent.left = new_node
+            else:
+                old_node.parent.right = new_node
+            
+        
+        #將基準點的左子節點設為原節點
+        new_node.left = old_node
+        #將原節點的父節點設為基準點
+        old_node.parent = new_node
+        
+        
+        #進行factor的更新
+        old_node.factor = old_node.factor +1 - min(0,new_node.factor)
+        new_node.factor = new_node.factor +1 + max(0,old_node.factor)
+    
+    def rotateRight(self,old_node):
+        #以原節點的左子節點來作為基準點
+        new_node = old_node.left
+        #將基準點的右子節點指定給原節點的左子節點，如此可以確保中序且避免節點衝突
+        old_node.left = new_node.right
+        #將基準點的父節點設為原節點的父節點
+        new_node.parent = old_node.parent
+        
+        if new_node.right:
+            #若基準點的左子節點是有節點的，則就要更新他的parent
+            new_node.right.parent = old_node
+        
+        if self.root==old_node:
+           #若原節點為根節點，則將基準點設為根節點
+            self.root = new_node
+            
+        if old_node.parent:
+            if old_node.isLeftChild():
+                old_node.parent.left = new_node
+            else:
+                old_node.parent.right = new_node
+            
+        #將基準點的右子節點設為原節點
+        new_node.right = old_node
+        #將原節點的父節點設為基準點
+        old_node.parent = new_node
+        
+        #進行factor的更新
+        old_node.factor = old_node.factor -1 - min(new_node.factor,0)
+        new_node.factor = new_node.factor -1 - max(old_node.factor,0)
+```
+
+在上面我們可以看到當呼叫左轉或右轉後，會進行factor的更新，那麼這些factor更新的算式又是怎麼來的呢？
+
+首先我們先思考，我們真正移動的中應該只會有原節點和基準點的高度改變了，所以必須進行平衡數值的更新，而其他的節點則是整個樹跟著移動，所以他們平衡數值不受影響。
+
+#### 左轉factor更新
+
+![](.gitbook/assets/zuo-zhuan-factor.png)
+
+先來處理A節點：
+
+old\(A\) = h\(B\) - h\(C\)  
+new\(A\) = h\(B\) - h\(D\)
+
+> h\(\)函式代表其高度，old代表未左轉前的樹，new代表左轉後的樹。
+
+而在舊樹中，B並未被改變，所以可以直接沿襲，而h\(C\) 可以用  
+\(1 + max\(h\(D\),h\(E\)\)\)取得，而到新樹中，D和E的高度再左轉後並不會被改變。
+
+我們將新樹與舊樹相減  
+==&gt; new\(A\) - old\(A\) = h\(B\) - h\(D\) - \(h\(B\) - \(1 + max\(h\(D\),h\(E\)\)\)\)  
+==&gt; new\(A\) - old\(A\) = 1 + max\(h\(D\),h\(E\)\) - h\(D\)  
+==&gt; new\(A\) = old\(A\) + 1 + max\(h\(D\),h\(E\)\) - h\(D\)  
+接著利用 `max(a，b) -c = max(a-c，b-c)` 來轉換  
+==&gt; new\(A\) = old\(A\) + 1 + max\(h\(D\) - h\(D\), h\(E\) - h\(D\)\)  
+==&gt; new\(A\) = old\(A\) + 1 + max\(0, h\(E\) - h\(D\)\)  
+==&gt; new\(A\) = old\(A\) + 1 - min\(0,h\(D\)-h\(E\)\)  
+==&gt; new\(A\) = old\(A\) + 1 - min\(0 , old\(C\)\)
+
+old\(A\) 就為old\_node，而old\(C\) 則為 new\_node，如此生成以下式子：
+
+```text
+old_node.factor = old_node.factor +1 - min(0,new_node.factor)
+```
+
+
+
+接著，讓我們來處理C節點：
+
+old\(C\) = h\(D\) - h\(E\)  
+new\(C\) = h\(A\) - h\(E\)
+
+可以發現h\(D\)與h\(E\)進行左轉時是不會被改變的，所以可以直接移植。並將兩式互減來求得平衡數值的改變  
+==&gt; new\(C\) - old\(C\) = h\(A\) - h\(D\)  
+==&gt; new\(C\) - old\(C\) = -\(1 + max\(h\(B\),h\(D\)\)\) - h\(D\)  
+==&gt; new\(C\) - old\(C\) = -1 - max\(h\(B\) - h\(D\),0\)  
+==&gt; new\(C\) - old\(C\) = -1 - max\(h\(A\),0\)  
+==&gt; new\(C\) = old\(C\) - 1 - max\(h\(A\),0\)
+
+old\(C\)即為new\_node，而h\(A\)則為更新後的old\(A\)，因此可得以下的式子：
+
+```text
+new_node.factor = new_node.factor -1 - max(old_node.factor,0)
+```
+
+以此為概念，右轉的平衡數值更新證明便以此類推了～
 
