@@ -434,45 +434,35 @@ Class AVL_Tree:
 
 #### LL類型
 
-接著讓我們來看看下面這種狀況，綠色節點的平衡數值為2，橘色節點的平衡數值為1，不平衡，所以一樣需要進行調整的動作。
+接著讓我們來看看下面這種狀況，綠色節點的平衡數值為2，橘色節點的平衡數值為1，不平衡，所以需要進行右轉的動作。
 
-![LL&#x985E;&#x578B;](.gitbook/assets/should_rotate_right%20%282%29.png)
-
-這時僅需以橘色為基準，進行右轉的動作，如下。
-
-![](.gitbook/assets/rotateright%20%281%29.png)
+![](.gitbook/assets/pu-tong-you-zhuan.png)
 
 除了上述這種狀況，當然也會有一種情況是基準點是有右子節點的，進而產生衝突，如下：
 
-![](.gitbook/assets/complex_should_rotate_right%20%281%29.png)
+![](.gitbook/assets/fu-za-ying-gai-you-zhuan.png)
 
 這時，只要將淺藍色節點的左子節點來作為橘色節點的左子節點，且因為橘色節點的左節點為淺藍色節點，所以不用害怕產生衝突。
 
+![](.gitbook/assets/fu-za-you-zhuan.png)
+
 #### RL類型
 
-再來看看下面這張圖，淺藍色的平衡數值為-2，橘色節點的平衡數值為2，所以必須要進行調整，但這時需要先以綠色節點作為基準進行右轉，轉換成RR類型，在進行左轉。在這裡若直接以綠色節點為基準點往左轉，紅色節點就會到綠色節點的右子節點，但這樣就不符合inorder的順序。
+再來看看下面這張圖，淺藍色的平衡數值為-2，橘色節點的平衡數值為2，所以必須要進行調整，但這時需要先以綠色節點作為基準進行右轉，轉換成RR類型，在進行左轉。在這裡若直接以綠色節點為基準點往左轉，紅色節點就會到綠色節點的右子節點，但這樣就不符合inorder的順序。遇到RL類型，以綠色節點作為基準點進行右轉，就可以轉換為RR類型。
 
-![RL&#x985E;&#x578B;](.gitbook/assets/should_rotateleft_rotateright.png)
-
-#### 先右轉再左轉
-
-當遇到RL類型，以綠色節點作為基準點進行右轉，就可以轉換為RR類型。
-
-![](.gitbook/assets/rl-lei-xing-xian-you-zhuan.png)
+![](.gitbook/assets/shouldrl-lei-xing.png)
 
 當轉換為RR類型後，就可以進行左轉轉換。
 
-![](.gitbook/assets/rl-lei-xing-zuo-zhuan.png)
+![](.gitbook/assets/rl-lei-xing-chu-li.png)
 
 #### LR類型
 
 遇到LR類型時，一樣也不能直接左轉，而必須先右轉轉換成LL類型，再進行左轉完成調整。
 
-![](.gitbook/assets/should-zuo-zhuan-you-zhuan.png)
+![](.gitbook/assets/lr-lei-xing-xian-zuo-zhuan.png)
 
-![](.gitbook/assets/lr-lei-xing-zuo-zhuan.png)
-
-![](.gitbook/assets/lr-lei-xing-you-zhuan.png)
+![](.gitbook/assets/lr-lei-xing-wan-cheng.png)
 
 好了，有了以下概念，我們可以知道最基本的動作就是左轉和右轉，因此先讓我們來編寫左轉和右轉以及rebalance物件方法。
 
