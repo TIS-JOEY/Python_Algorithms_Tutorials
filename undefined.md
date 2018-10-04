@@ -630,15 +630,11 @@ new_node.factor = new_node.factor -1 - max(old_node.factor,0)
 
 ![](.gitbook/assets/delete_root1.png)
 
-![](.gitbook/assets/delete_root1%20%281%29.png)
-
 > 可以看到，因為最小值節點父節點還有右子節點，所以上面的平衡數值不會受到影響。
 
 情況二：左子樹最小值節點為葉子節點，這時就要往上進行平衡數值的更新，因為會產生影響，而當出現平衡數值&gt;1或&lt;-1時，就跟增加節點時一樣的處理骯法。
 
 ![](.gitbook/assets/delete_root2.png)
-
-![](.gitbook/assets/delete_root2%20%281%29.png)
 
 情況三：刪除的的根節點沒有左子節點，這時很簡單，只要直接將原根節點的左子節點設為根節點即可。
 
@@ -662,7 +658,7 @@ new_node.factor = new_node.factor -1 - max(old_node.factor,0)
 
 下圖就是展示若取代節點的父節點有其他子節點，
 
-![](.gitbook/assets/delete_middle2.png)
+![](.gitbook/assets/delete_middle_node%20%281%29.png)
 
 > 注意：每次我們都會選出一個節點來取代被刪除的點\(除了被刪除的點為葉子節點\)，這時取代點的父節點都要進行平衡數值的更新，若取代點為其父節點的左子節點，則其父節點的平衡數值應-1，反之則要+1。
 
