@@ -350,6 +350,8 @@ class AVL_Tree:
     def put(self,data):
         if(self.root):
             self._put(data,self.root)
+        
+        #若根節點
         else:
             self.root = TreeNode(data)
     
@@ -357,20 +359,20 @@ class AVL_Tree:
         if(run_node.data > data):
             #要加入的數值比較小，要往左子樹走
             if(run_node.hasLeftChild()):
-                run_node = run_node.left
-                self._put(data,run_node)
+                self._put(data,run_node.left)
+            
+            #因為無左子節點，所以可以指定其左子節點為要加入的樹節點
             else:
-                #因為無左子節點，所以可以指定其左子節點為要加入的樹節點
                 newNode = TreeNode(data)
                 run_node.left = newNode
                 newNode.parent = run_node
                 #因新增一節點，所以要進行更新factor的動作
                 self.update_factor(run_node.left)
+                
+        #要加入的數值比較大，要往右子樹走
         else:
-            #要加入的數值比較大，要往右子樹走
             if(run_node.hasRightChild()):
-                run_node = run_node.right
-                self._put(data,run_node)
+                self._put(data,run_node.right)
             else:
                 #因為無右子節點，所以可以指定其右子節點為要加入的樹節點
                 newNode = TreeNode(data)
@@ -687,7 +689,31 @@ class AVL_Tree:
         return run_node,pre_node
 ```
 
-當建構完查找左子樹最小值和右子樹最大值後，就可以來建構刪除節點的物件方法。
+接著讓我們來建構刪除數值時的更新平衡數值的物件方法，大致和增加節點的更新數值方法相同，但因為是刪除，所以當傳入的是從左子樹傳上來的，其平衡數值要-1，因為代表有個左子樹中的某節點被刪除了，反之從右子樹就要+1。
+
+```text
+class AVL_Tree:
+    ...
+    def update_delete_facotr(self,run_node):
+        #若檢查的節點平衡數值>1或<1則進行處理
+        if run_node.factor < -1 or run_node.factor > 1:
+            self.rebalance(run_node)
+            return
+        if run_node.parent:
+            #若是其父節點的左子節點，則其父節點的平衡數值-1(因為是刪除)
+            if(run_node.isLeftChild()):
+                run_node.parent.factor-=1
+            
+            #若是其父節點的右子節點，則其父節點的平衡數值+1(因為是刪除)
+            elif(run_node.isRightChild()):
+                run_node.parent.factor+=1
+            
+            #若其父節點的平衡數值已成為0，就代表不用再往上調整了，因為已經平衡了不會影響到上面的平衡數值
+            if run_node.parent.factor!=0:
+                self.update_delete_facotr(run_node.parent)
+```
+
+當建構完這些後，就可以來建構刪除節點的物件方法。
 
 ```text
 class AVL_Tree:
