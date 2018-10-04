@@ -309,18 +309,18 @@ def multiMulti(U):
 * 輸入：欲加入數值或欲刪除數值
 * 輸出：平衡二叉樹
 
-首先先讓我們來建立樹節點，這是二叉樹的基本單元，每個單元的屬性有儲存的值data，左節點left，右節點right，parent父節點以及用來計算平衡分數的factor：
+首先先讓我們來建立樹節點，這是二叉樹的基本單元，每個單元的屬性有儲存的值data，左節點left，右節點right，parent父節點以及用來計算平衡分數的factor，還有一些檢查方法：
 
 ### 建立樹節點
 
 ```text
 class TreeNode:
-    def __init__(self,data,left = None,right = None,parent = None):
+    def __init__(self,data,left = None,right = None,parent = None,factor = 0):
         self.data = data
         self.left = left
         self.right = right
         self.parent = parent
-        self.factor = 0
+        self.factor = factor
     
     def hasLeftChild(self):
         return self.left!=None
@@ -329,13 +329,13 @@ class TreeNode:
         return self.right!=None
     
     def isLeftChild(self):
-        return self.parent.left == self
+        return (self.parent and self.parent.left == self)
     
     def isRightChild(self):
-        return self.parent.right == self
+        return (self.parent and self.parent.right == self)
     
     def isLeaf(self):
-        return self.left and self.right
+        return not (self.left or self.right)
 ```
 
 ### 建立二叉樹
@@ -566,8 +566,8 @@ class AVL_Tree:
         old_node.parent = new_node
         
         #進行factor的更新
-        old_node.factor = old_node.factor -1 - min(new_node.factor,0)
-        new_node.factor = new_node.factor -1 - max(old_node.factor,0)
+        old_node.factor = old_node.factor -1 - max(new_node.factor,0)
+        new_node.factor = new_node.factor -1 + min(old_node.factor,0)
 ```
 
 在上面我們可以看到當呼叫左轉或右轉後，會進行factor的更新，那麼這些factor更新的算式又是怎麼來的呢？
@@ -625,4 +625,158 @@ new_node.factor = new_node.factor -1 - max(old_node.factor,0)
 ```
 
 以此為概念，右轉的平衡數值更新證明便以此類推了～
+
+### 刪除節點
+
+當我們想要刪掉一個節點時，我們又要來做例行的工作，調整平衡數值。那麼在刪除節點的情況中，大概可以分成三種：
+
+1. 刪除根節點：
+2. 刪除葉子節點：
+3. 刪除中介節點：
+
+刪除節點的原則是若要被刪掉的節點是在根節點的左子樹，則我們找左子樹中最小的數值來取代，而若被刪掉的節點是在根節點的右子樹，則我們找右子樹中最大的數值來取代，原因是他們都是在邊界節點不太會影響平衡數值且可保持inorder的順序 。
+
+基於上述概念，所以我們必須建構出找到左子樹最小的值return他再將其設為None，還有建構出找出右子樹最大的值return再將其設為None。
+
+```text
+class AVL_Tree:
+    ...
+    def findLeftMin(self):
+        run_node,pre_node = self.root,self.root
+        while run_node.left != None and not run_node.isLeaf():
+            run_node,pre_node = run_node.left,run_node
+            
+        #此時run_node為左子樹中最小值的節點，而pre_node為其父節點
+        return run_node,pre_node
+        
+    
+    def findRightMax(self):
+        run_node,pre_node = self.root,self.root
+        while run_node.right != None and not run_node.isLeaf():
+            run_node,pre_node = run_node.right,run_node
+            
+        #此時run_node為右子樹中最大值的節點，而pre_node為其父節點
+        return run_node,pre_node
+```
+
+當建構完查找左子樹最小值和右子樹最大值後，就可以來建構刪除節點的物件方法。
+
+```text
+class AVL_Tree:
+    ...
+    def delete(self,data):
+        run_node = self.root
+        
+        while(run_node!=None):    
+            #找到要被刪除的節點
+            if(run_node.data == data):
+                break
+            
+            #比要查找的值小，往右子樹跑
+            elif(run_node.data > data):
+                run_node = run_node.left
+            
+            #比要查找的數值大，往左子樹跑
+            else:
+                run_node = run_node.right
+        
+        #找不到要被刪除的節點
+        if run_node == None: 
+            return
+        
+        #若要刪除的節點為根節點
+        if self.root == run_node:
+            
+            #若只剩一個根節點
+            if(self.root.isLeaf()):
+                self.root = None
+            else:
+                #找出左子樹中最小的數值來取代，以符合中序排列
+                replace,replace_parent = self.findLeftMin()
+
+                #進行取代
+                run_node.data = replace.data
+                
+                #刪除左子樹最小值的節點
+                replace_parent.left = None
+                
+                #因刪除所以要將左子樹最小值節點的父節點之平衡數值-1 (因為刪除的是左子節點)
+                replace_parent.factor-=1 
+                
+                #若所找到的最小數值為根節點，就代表了根節點已經沒有左子樹了，這時就直接將根節點設為其右子節點
+                if(replace==self.root):
+                    self.root = self.root.right
+                else:
+                    #若被刪除的左子樹最小值節點的父節點為葉節點，就代表上面的平衡數值會受到影響，所以必須進行更新
+                    if(replace_parent.isLeaf()):
+                        self.update_delete_facotr(replace_parent)
+                    
+                    #若並非為葉子節點，則要進行左轉動作，以保持左子樹最左邊的節點為葉子節點
+                    else:
+                        self.rotateLeft(replace_parent)
+        
+        #若要刪除的節點為葉節點
+        elif run_node.isLeaf():
+            
+            #若要刪除的節點為其父節點的左子節點，直接刪除，並因被刪除的是其父節點的左子節點，所以其父節點的平衡點樹應-1
+            if(run_node.isLeftChild()):
+                run_node.parent.left = None
+                run_node.parent.factor-=1
+            
+            #若要刪除的節點為其父節點的右子節點，直接刪除，並因被刪除的是其父節點的右子節點，所以其父節點的平衡點樹應+1
+            else:
+                run_node.parent.right = None
+                run_node.parent.factor+=1
+            
+            #若刪除後，其父節點變成葉子節點，則代表上面的平衡數值會受到影響，所以必須進行更新
+            if(run_node.parent.isLeaf()):
+                self.update_delete_facotr(run_node.parent)
+        
+        #若要刪除的節點為中介節點
+        else:
+            #若要刪除的節點數值在根節點的左子樹，則找出左子樹中最小值來替代
+            if(self.root.data > data):
+                
+                #找出左子樹中最小的數值來取代，以符合中序排列
+                replace,replace_parent = self.findLeftMin()
+                
+                #進行取代
+                run_node.data = replace.data
+                
+                #刪除左子樹最小值的節點
+                replace_parent.left = None
+                
+                #因刪除所以要將左子樹最小值節點的父節點之平衡數值-1 (因為刪除的是左子節點)
+                replace_parent.factor-=1
+                
+                #若刪除後，其父節點變成葉子節點，則代表上面的平衡數值會受到影響，所以必須進行更新
+                if(replace_parent.isLeaf()):
+                    self.update_delete_facotr(replace_parent)
+                
+                #若其父節點還有右子節點，則必須進行左轉，以確保左子樹最左邊的節點為葉子節點
+                else:
+                    self.rotateLeft(replace_parent)
+            
+            #若要刪除的節點數值在根節點的右子樹，則找出右子樹中最大值來替代
+            else:
+                #找出右子樹中最大的數值來取代，以符合中序排列
+                replace,replace_parent = self.findRightMax()
+                
+                #進行取代
+                run_node.data = replace.data
+                
+                #刪除左子樹最小值的節點
+                replace_parent.right = None
+                
+                #因刪除所以要將右子樹最小值節點的父節點之平衡數值+1 (因為刪除的是右子節點)
+                replace_parent.factor+=1
+                
+                #若刪除後，其父節點變成葉子節點，則代表上面的平衡數值會受到影響，所以必須進行更新
+                if(replace_parent.isLeaf()):
+                    self.update_delete_facotr(replace_parent)
+                
+                #若其父節點還有左子節點，則必須進行右轉，以確保右子樹最右邊的節點為葉子節點
+                else:
+                    self.rotateRight(replace_parent)
+```
 
