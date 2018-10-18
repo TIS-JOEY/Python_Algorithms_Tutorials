@@ -830,3 +830,53 @@ class AVL_Tree:
                     self.rotateRight(replace_parent)
 ```
 
+### Algorithm 9 商人旅行問題
+
+所謂的商人旅行問題，就是有個商人會從某個起點出發，並會經過每個點，最後再回到起點，而這個路程必須是最小的。
+
+輸入：圖\(含節點與各點間的路徑長\)  
+輸出：最短路徑長與最短路徑
+
+```text
+import itertools
+def tsp(adj_list):    
+	# 字典A的key代表遍歷幾個點與最後的連接點，相對應的值則是路徑長與路徑。    
+	# 字典A存儲各點到起點的距離。    
+	A = {(frozenset([0,idx]),idx):(value,[0,idx]) for idx,value in enumerate(adj_list[0][1:],1)}
+	# 共幾個點。       
+	num_node = len(adj_list)        
+
+	# m代表每次要考慮幾個點間的距離，m會不斷增加直到到達節點數，並會使用到前面產生的距離與路徑，使用動態規劃的概念，Bottom up的編程概念。    
+	for m in range(2,num_node):        
+		B = {}                
+
+		# 產生增加一個節點後的節點組合。        
+		for S in [frozenset(i)|{0} for i in itertools.combinations(range(1,num_node),m)]:                        
+			
+			for j in S - {0}:                
+				
+				# 代表加入j節點後，路徑長與路徑。
+				B[(S, j)] = min( [(A[(S-{j},k)][0] + adj_list[k][j], A[(S-{j},k)][1] + [j]) for k in S if k != 0 and k!=j]) 
+		A = B        
+
+	return min([(A[i][0] + adj_list[i[-1]][0],A[i][1] + [0]) for i in iter(A)])  
+```
+
+上面的程式碼基本上會是下面的流程  
+Step 1:  
+A字典的key：  
+\(frozenset\(0,1\),1\)、\(fronzenset\(0,2\),2\) 等，frozenset裡存儲的是經歷過幾個點，而元組的另一個值則代表終結點目前是哪個。
+
+Step 2：
+
+S 會產生的組合會是  
+{0,1,2} 、{0,1,3}、{0,1,2}等所有除了起點以外的兩節點連接組合。  
+{0,1,2,3} 等所有除了起點以外的三個節點連接組合。
+
+有了這個後，我們就可以遍歷這些組合，並找出加入一個節點後的距離變化。  
+如 B\[frozenset\(0,1,2\),2\]便是指共遍歷0,1,2兩個點，並以2為終止節點。  
+B\[frozenset\(0,1,2,3\),3\] 則是指共遍歷0,1,2,3三個點，並以3為終止節點，其中會去檢查1與2作為連接3此節點哪個距離較短，以維持當遍歷0,1,2,3時，並以3為終止節點時，距離皆是最優的。
+
+當全部完成後，只要再加上個終止節點回到起點的距離，並選出距離最小的就好。  
+
+
