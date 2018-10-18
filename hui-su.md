@@ -35,5 +35,31 @@ def queen(A,cur = 0):
 
 ```
 
+### Algorithm 2 01背包問題
 
+01背包問題之前已經用動態規劃去進行優化了，但其實他也可以被應用在回溯法，具體而言就是當超過背包重量時，就是無前景的事，不用再繼續處理下去。
+
+```text
+bestV = 0
+curW = 0
+curV = 0
+bestx = None
+
+def backtrack(i):
+	global bestV,curW,curV,bestx
+	if i>= n:
+		if bestV < curV:
+			bestV = curV
+			bestx = x[:]
+	else:
+		if curW + w[i]<=c:
+			x[i] = True
+			curW += w[i]
+			curV += v[i]
+			backtrack(i+1)
+			curW-=w[i]
+			curV-=v[i]
+		x[i] = False
+		backtrack(i+1)
+```
 
