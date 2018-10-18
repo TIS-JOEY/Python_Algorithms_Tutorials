@@ -834,8 +834,9 @@ class AVL_Tree:
 
 所謂的商人旅行問題，就是有個商人會從某個起點出發，並會經過每個點，最後再回到起點，而這個路程必須是最小的。
 
-輸入：圖\(含節點與各點間的路徑長\)  
-輸出：最短路徑長與最短路徑
+輸入：鄰接矩陣  
+輸出：最短路徑長與最短路徑  
+目標：解決商人旅行問題
 
 ```text
 import itertools
@@ -877,6 +878,97 @@ S 會產生的組合會是
 如 B\[frozenset\(0,1,2\),2\]便是指共遍歷0,1,2兩個點，並以2為終止節點。  
 B\[frozenset\(0,1,2,3\),3\] 則是指共遍歷0,1,2,3三個點，並以3為終止節點，其中會去檢查1與2作為連接3此節點哪個距離較短，以維持當遍歷0,1,2,3時，並以3為終止節點時，距離皆是最優的。
 
-當全部完成後，只要再加上個終止節點回到起點的距離，並選出距離最小的就好。  
+當全部完成後，只要再加上個終止節點回到起點的距離，並選出距離最小的就好。
 
+### Algorithm 10 Prim 演算法
+
+輸入：鄰接矩陣  
+輸出：最短距離連通圖  
+目標：找出最短距離連通圖
+
+Prim演算法的意義為從任一起點開始，在每一次都會選出與目前圖最短距離的節點，而當加入點後，就可以以該點去延伸找出其他最短距離點。
+
+```text
+def prim(adj_list):
+	travel = [0]
+	start = 0
+	while(len(travel) != len(adj_list)):
+		min_value = float('inf')
+		can = None
+		for i in travel:
+			choose = min([(w,index) for index,w in enumerate(adj_list[i]) if index not in travel])
+			if(choose[0] < min_value):
+				min_value = choose[0]
+				can = choose[1]
+		travel.append(can)
+
+	return travel
+```
+
+### Algorithm 11 Kruskal 演算法
+
+輸入：圖\(含節點與邊\)  
+輸出：最短距離連通圖  
+目標：找出最短距離連通圖
+
+Kruskal演算法，每一次都會從圖中找出還沒遍歷過的最短路徑，但要檢查當加入此路徑後，會不會形成連通圖。
+
+```text
+class kruskal:
+	def __init__(self,graph):
+		self.parent = {n:n for n in graph['vertices']}
+		self.edges = [v for v in graph['edges']]
+		self.edges.sort()
+    
+    # 找到所連接的最終節點並更新 
+	def find_set(self,vertice):
+		if(self.parent[vertice]!=vertice):
+			self.parent[vertice] = self.find_set(self.parent[vertice])
+
+		return self.parent[vertice]
+
+	def union(self,u,v):
+		ancestor1 = self.find_set(u)
+		ancestor2 = self.find_set(v)
+        
+         # 若兩者最終節點不同，則要進行更新，將兩者連接在一起。
+		if ancestor1!=ancestor2:
+			self.parent[ancestor1] = ancestor2
+
+	def kruskal_travel(self):
+		mst = []
+		for edge in self.edges:
+			weight,u,v = edge
+             
+            # 若兩者並無連接
+			if self.find_set(u)!=self.find_set(v):
+				mst.append(edge)
+				self.union(u,v)
+
+```
+
+### Algorithm 12 Dijkstra 演算法
+
+輸入：相鄰矩陣  
+輸出：起點到各點的最短距離  
+目標：找出起點到各點的最短距離
+
+每次選出離原點最短的點，並更新。
+
+```text
+def dijkstra(adj_list,start = 0):
+    visited = [start]
+    weight = adj_list[start]
+    
+    while(len(visited)!=len(adj_list[0])):
+        # 選出離原點最短的點。
+        ans = min([(value,idx) for idx,value in enumerate(weight) if idx not in visited])
+        visited.append(ans[1])
+        
+        # 當加入點後，對距離進行更新。
+        for i in range(len(weight)):
+            weight[i] = min(weight[i],ans[0] + adj_list[ans[1]][i])
+    
+    return weight
+```
 
