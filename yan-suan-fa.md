@@ -118,28 +118,31 @@ def dijkstra(adj_list,start = 0):
 | 4 | 1 | 40 |
 
 ```text
-class scheduling:	
-	def __init__(self,job_list):		
-		self.job_list = job_list
-	def arrange(self):				
-		max_path_value = -float('inf')		
-		max_path = None		
+def sch(job_list,n):
+	# 依照獲利由大到小排序
+	job_list.sort(key = lambda x:x[2],reverse = True)
+
+	# 找出最大時限
+	max_deadline = max([i[1] for i in job_list])
+
+	# 最多可以選最大時限個工作
+	slot = [False for i in range(max_deadline)]
+
 	
-		for i in self.job_list:			
-			path = [i[0]]			
-			value = i[2]			
-			time = 2			
-			for j in self.job_list:				
-				if(j[0] not in path):					
-					if(j[1]>=time):						
-						path.append(j[0])						
-						value+=j[2]						
-						time+=1
-			
-			if(max_path_value<value):				
-				max_path_value = value				
-				max_path = path
-		return max_path
+	value = 0
+
+	# 從最大獲利的工作開始找
+	for i in range(n):
+		
+
+		# 依時序塞入，若當前工作的時限小於目前時間，則以當前工作時限為主，因為代表當前工作不能塞入現在的時限。
+		# 但若往前找時，發現前一個時序已經有工作了，則放棄，因為先塞入的一定是獲利較高的。
+		for j in range(min(n,job_list[i][1]-1),-1,-1):
+			if slot[j]== False:
+				value+=job_list[i][2]
+				slot[j] = True
+				break
+	print(value)
 ```
 
 ### Algorithm 5 霍夫曼編碼
